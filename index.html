@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Murph Plan">
+<title>Murph Plan Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{background:#0e0e0e;color:#ede9e0;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.5;max-width:480px;margin:0 auto;min-height:100%;padding-bottom:72px}
+.bebas{font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em}
+button{cursor:pointer;font-family:inherit;border:none}
+input,textarea{font-family:inherit;font-size:14px;outline:none;-webkit-appearance:none}
+textarea{resize:vertical}
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#181818;border-top:1px solid #2a2a2a;display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;background:none;border:none;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:#555;font-size:9px;font-family:monospace;letter-spacing:0.1em;text-transform:uppercase;transition:color 0.15s}
+.nav-btn.active{color:#e8470a}
+.nav-btn .ni{font-size:22px;line-height:1}
+.screen{display:none}
+.screen.active{display:block}
+#s-coach{display:none;flex-direction:column;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:150;background:#0e0e0e}
+#s-coach.active{display:flex;bottom:60px}
+.ph{background:#181818;padding:14px 18px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.back{background:none;border:none;color:#666;font-size:26px;padding:0;line-height:1}
+.ph-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.05em}
+.ph-sub{font-size:11px;color:#666;margin-top:1px}
+#home-header{background:linear-gradient(135deg,#1c0905 0%,#0e0e0e 65%);padding:28px 18px 20px;border-bottom:1px solid #2a2a2a}
+.label-sm{font-family:monospace;font-size:9px;color:#e8470a;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px}
+.wk-big{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1}
+.wk-focus{font-size:12px;color:#888;margin-top:4px}
+.phase-bar{display:flex;gap:3px;margin-top:18px;align-items:center}
+.pseg{height:4px;border-radius:2px;background:#2a2a2a;transition:background 0.3s;flex:1}
+.pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:#2a2a2a}
+.phase-labels{display:flex;justify-content:space-between;margin-top:5px}
+.phase-labels span{font-size:9px;color:#555;font-family:monospace}
+.wk-list{padding:14px}
+.section-label{font-family:monospace;font-size:9px;color:#555;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px}
+.wk-item{background:#141414;border:1px solid #2a2a2a;border-radius:5px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-user-select:none}
+.wk-item.cur{background:#181818;border-color:#e8470a}
+.wk-num{font-family:'Bebas Neue',sans-serif;font-size:30px;color:#444;width:38px;text-align:center;flex-shrink:0;line-height:1}
+.wk-item.cur .wk-num{color:#e8470a}
+.wk-item.wkdone .wk-num{color:#4caf7d}
+.wk-info{flex:1;min-width:0}
+.wk-name{font-size:12px;color:#ede9e0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-pb{height:3px;background:#2a2a2a;border-radius:2px;overflow:hidden;margin-top:6px}
+.wk-pf{height:100%;border-radius:2px;transition:width 0.4s}
+.day-list{padding:12px 14px}
+.day-card{background:#181818;border:1px solid #2a2a2a;border-radius:5px;margin-bottom:10px;overflow:hidden}
+.day-card.day-done{border-color:#4caf7d}
+.day-card.day-murph{border-color:#c9a84c}
+.day-head{padding:11px 14px;display:flex;align-items:center;gap:10px}
+.day-name-lbl{font-family:'Bebas Neue',sans-serif;font-size:20px;width:40px;flex-shrink:0;line-height:1}
+.type-tag{font-family:monospace;font-size:9px;letter-spacing:0.12em;padding:2px 7px;border-radius:2px;text-transform:uppercase}
+.log-btn{margin-left:auto;border:none;font-weight:700;padding:7px 13px;border-radius:3px;font-size:11px;letter-spacing:0.05em;flex-shrink:0}
+.day-tasks{padding:0 14px 10px}
+.task-row{display:flex;gap:10px;align-items:flex-start;padding:5px 0;border-bottom:1px solid #1e1e1e;cursor:pointer;-webkit-user-select:none}
+.task-row:last-child{border-bottom:none}
+.cb{width:18px;height:18px;border:1.5px solid #333;border-radius:3px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#0e0e0e;background:transparent;transition:all 0.15s}
+.cb.chk{background:#4caf7d;border-color:#4caf7d}
+.task-txt{font-size:12px;color:#a8a49c;line-height:1.5}
+.task-row.ticked .task-txt{opacity:0.4;text-decoration:line-through}
+.day-note-display{margin:0 14px 10px;font-size:11px;color:#666;font-style:italic;padding:6px 8px;background:#141414;border-radius:3px;border-left:2px solid #e8470a}
+.week-nav{display:flex;gap:8px;padding:0 14px 8px}
+.wn-btn{flex:1;background:#181818;border:1px solid #2a2a2a;color:#b8b4ac;padding:11px;border-radius:4px;font-size:12px;cursor:pointer}
+.log-body{padding:14px}
+.log-sec-title{font-family:monospace;font-size:9px;color:#555;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px}
+.metric-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e1e}
+.metric-row:last-child{border-bottom:none}
+.m-icon{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.m-label{flex:1}
+.m-name{font-size:12px;color:#ede9e0;font-weight:500}
+.m-target{font-size:10px;color:#555}
+.m-input{width:70px;background:#222;border:1px solid #2a2a2a;color:#ede9e0;font-size:15px;padding:7px 8px;border-radius:3px;text-align:right}
+.m-unit{font-size:11px;color:#555;width:28px}
+.note-area{width:100%;background:#181818;border:1px solid #2a2a2a;color:#ede9e0;font-size:13px;padding:12px;border-radius:4px;min-height:90px;line-height:1.6}
+.note-area::placeholder{color:#444}
+.btn-fire{background:#e8470a;border:none;color:#0e0e0e;font-weight:700;padding:15px;border-radius:4px;width:100%;font-size:15px;letter-spacing:0.05em;margin-top:12px;cursor:pointer}
+.murph-hint{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.5);border-radius:4px;padding:12px 14px;font-size:12px;color:#b8b4ac;line-height:1.6;margin-top:14px}
+.prog-body{padding:14px}
+.prog-card{background:#181818;border:1px solid #2a2a2a;border-radius:5px;padding:14px 16px;margin-bottom:10px}
+.prog-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.prog-bar-wrap{height:6px;background:#2a2a2a;border-radius:3px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:3px;transition:width 0.5s;background:#e8470a}
+.prog-bar-fill.g{background:#4caf7d}
+.hist-row{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+.hist-pt{text-align:center;flex-shrink:0;min-width:32px}
+.hist-v{font-size:10px;color:#b8b4ac}
+.hist-w{font-size:9px;color:#555}
+.sim-row{background:#181818;border:1px solid #2a2a2a;border-radius:4px;padding:11px 14px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start}
+.sim-row.sim-logged{border-color:#c9a84c}
+.coach-hdr{background:#181818;padding:14px 18px;border-bottom:1px solid #2a2a2a;flex-shrink:0}
+.chat-area{flex:1;overflow-y:auto;padding:14px 14px 8px;-webkit-overflow-scrolling:touch;min-height:0}
+.msg{margin-bottom:12px;display:flex}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:87%;border:1px solid #2a2a2a;border-radius:5px;padding:10px 13px;font-size:13px;line-height:1.7;color:#b8b4ac;background:#181818;white-space:pre-wrap;word-break:break-word}
+.msg.user .bubble{background:#e8470a;border-color:#e8470a;color:#0e0e0e}
+.typing-ind{font-size:13px;color:#555;padding:10px 13px;background:#181818;border:1px solid #2a2a2a;border-radius:5px;display:inline-block}
+.suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.sug{background:rgba(232,71,10,0.12);border:1px solid rgba(232,71,10,0.35);color:#b8b4ac;font-size:11px;padding:7px 11px;border-radius:3px;text-align:left;line-height:1.4;cursor:pointer}
+.chat-bar{padding:10px 14px 12px;background:#181818;border-top:2px solid #e8470a;display:flex;gap:8px;flex-shrink:0}
+.chat-inp{flex:1;background:#222;border:2px solid #444;color:#ede9e0;padding:12px 14px;border-radius:8px;font-size:15px}
+.chat-inp:focus{border-color:#e8470a}
+.chat-inp::placeholder{color:#555}
+.send-btn{background:#e8470a;border:none;color:#0e0e0e;font-weight:700;padding:12px 18px;border-radius:8px;font-size:14px;cursor:pointer;letter-spacing:0.05em}
+.send-btn:disabled{background:#333;color:#666}
+#saving-ind{position:fixed;top:10px;right:14px;font-family:monospace;font-size:9px;color:#555;letter-spacing:0.15em;z-index:999;opacity:0;transition:opacity 0.2s;pointer-events:none}
+#saving-ind.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="saving-ind">SAVING...</div>
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div id="home-header">
+    <div class="label-sm">// Murph Prep · 12 Weeks · Memorial Day</div>
+    <div class="wk-big bebas">WEEK <span id="h-wn" style="color:#e8470a">1</span> <span style="color:#333;font-size:28px">/ 12</span></div>
+    <div class="wk-focus" id="h-focus"></div>
+    <div class="phase-bar" id="pbar"></div>
+    <div class="phase-labels"><span>Foundation</span><span>Integration</span><span>Peak</span></div>
+  </div>
+  <div class="wk-list">
+    <div class="section-label">All Weeks — tap to open</div>
+    <div id="wk-list"></div>
+  </div>
+</div>
+
+<!-- WEEK VIEW -->
+<div id="s-week" class="screen">
+  <div class="ph">
+    <button class="back" onclick="go('home')">&#8249;</button>
+    <div style="flex:1">
+      <div class="ph-title" id="wv-title"></div>
+      <div class="ph-sub" id="wv-sub"></div>
+    </div>
+    <div style="font-family:monospace;font-size:11px;color:#4caf7d" id="wv-pct"></div>
+  </div>
+  <div class="day-list" id="day-list"></div>
+</div>
+
+<!-- LOG -->
+<div id="s-log" class="screen">
+  <div class="ph">
+    <button class="back" id="log-back-btn">&#8249;</button>
+    <div>
+      <div class="ph-title" id="log-title"></div>
+      <div class="ph-sub" id="log-sub"></div>
+    </div>
+  </div>
+  <div class="log-body">
+    <div style="margin-bottom:18px">
+      <div class="log-sec-title">Update this week's metrics (fill in any that apply)</div>
+      <div id="metric-inputs"></div>
+    </div>
+    <div style="margin-bottom:4px">
+      <div class="log-sec-title">Session notes</div>
+      <textarea id="log-note" class="note-area" placeholder="How did it go? Times, DU PR, how the vest felt, any pain or issues..."></textarea>
+    </div>
+    <button class="btn-fire" onclick="saveDay()">MARK DAY COMPLETE ✓</button>
+    <div id="murph-hint" class="murph-hint" style="display:none"></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="s-progress" class="screen">
+  <div class="ph">
+    <div>
+      <div class="ph-title">PROGRESS</div>
+      <div class="ph-sub">Tracking toward your goals</div>
+    </div>
+  </div>
+  <div class="prog-body" id="prog-body"></div>
+</div>
+
+<!-- COACH -->
+<div id="s-coach" class="screen">
+  <div class="coach-hdr">
+    <div class="ph-title bebas">AI COACH</div>
+    <div class="ph-sub">Knows your plan · responds to your actual results</div>
+  </div>
+  <div class="chat-area" id="chat-area"></div>
+  <div class="chat-bar">
+    <input id="chat-inp" class="chat-inp" 
+      placeholder="Type here — e.g. Half Murph in 30 min" 
+      autocomplete="off" autocorrect="off" spellcheck="false"
+      type="text" enterkeyhint="send" />
+    <button id="send-btn" class="send-btn" onclick="sendMsg()">SEND</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nav-btn active" id="nb-home" onclick="go('home')"><span class="ni">📋</span>Plan</button>
+  <button class="nav-btn" id="nb-week" onclick="go('week')"><span class="ni">📅</span>Week</button>
+  <button class="nav-btn" id="nb-progress" onclick="go('progress')"><span class="ni">📈</span>Progress</button>
+  <button class="nav-btn" id="nb-coach" onclick="go('coach')"><span class="ni">💬</span>Coach</button>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const W=[
+ {n:1,ph:1,lb:"Foundation",fo:"Run base + skill mechanics (no vest)",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: 3x5 jumping BMU on low bar — full turnover each rep","AM: 3x10 kip swings (hollow to arch to hip snap)","CF class — full intensity","Post: 3 max-effort DU sets, 90 sec rest, log best unbroken"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 20 min easy Zone 2, NO vest (~130-140 bpm)","CF class — embrace the pre-fatigued legs"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["20-30 min walk or easy bike — no running","Mobility: lats, thoracic, hip flexors, wrists — 20 min","10 min DU drills only — wrist snap, no arm swing","Foam roll: lats, pecs, thoracic"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring support holds (top of dip): 3x15 sec","AM: Strict ring rows, feet elevated: 3x8 slow","AM: False grip hang: 3x20 sec","CF class","Post: 400mx4 easy pace, NO vest, 90 sec rest"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class — full effort","Post: Ring MU low work: 3x5 feet on ground, full pattern","Post: DU max set — push for PR, log it"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class (long/team WOD)","No extra volume — Saturday class is enough"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest — protect this, CNS needs it","Light stretch or short walk only","Meal prep for the week"]}
+ ]},
+ {n:2,ph:1,lb:"Foundation",fo:"Volume building + technique refinement",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: 3x5 jumping BMU — hold the support position at top","AM: 3x10 hip-to-bar kip swings","CF class","Post: 3 DU sets — aim for 10+ consecutive"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 20 min easy Zone 2, NO vest","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["20-30 min easy walk","Mobility 20 min — lats and hip flexors priority","10 min DU wrist drills"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring support holds: 3x15 sec","AM: Ring rows: 3x8","AM: False grip hang: 3x25 sec","CF class","Post: 400mx4 easy, NO vest"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: Banded ring MU 3x3 — focus on turnover only","Post: DU max set — log PR"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class","No extra volume"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Foam roll: lats, pecs, thoracic"]}
+ ]},
+ {n:3,ph:1,lb:"Foundation",fo:"Kip mechanics + first full BMU attempts",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Kipping BMU attempts — 5 sets of 1-3 reps, full rest","AM: VIDEO your kip — check hip height reaches the bar","CF class","Post: 3 DU sets — aim for 15+ consecutive"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 22 min easy Zone 2, NO vest","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["20-30 min walk","Mobility 20 min","DU drills: 1 DU per 3 singles — 10 min"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: False grip hang: 3x30 sec","AM: Strict ring dips: 3x6","AM: Banded ring MU: 3x3","CF class","Post: 400mx4 moderate pace, NO vest"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: Kipping pull-ups 5-4-3-2-1, 90 sec rest","Post: DU 1-1-2 pattern (single-single-double) 3x2 min"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class","If energy: 5x10 kipping pull-ups — Murph volume"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Sleep 8+ hours"]}
+ ]},
+ {n:4,ph:1,lb:"Foundation",fo:"HALF MURPH TEST — establish your baseline",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU attempts — 5 sets, full rest between","CF class","Post: DU max set — log PR"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 25 min easy Zone 2, NO vest","CF class — moderate intensity (Half Murph Saturday)"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Easy walk 20 min only — pre-Murph recovery","Mobility 20 min","NO DU drills today"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring skill — light 15 min only","CF class — moderate effort","Rest up for Saturday"]},
+  {nm:"Fri",tp:"Rest",tc:"#444",ts:["FULL REST — tomorrow is Half Murph","Light stretch only","Eat well, hydrate well"]},
+  {nm:"Sat",tp:"MURPH TEST",tc:"#c9a84c",mu:true,ts:["HALF MURPH — NO vest","800m run, 50 pull-ups, 100 push-ups, 150 air squats, 800m run","LOG YOUR TIME — this is your baseline for the plan","Note: which movement slowed you most?"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest — you earned it","Light walk if legs are stiff","Note energy + soreness 1-10"]}
+ ]},
+ {n:5,ph:2,lb:"Integration",fo:"VEST GOES ON — first vest runs and pull-ups",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — 5 sets, push for first unassisted full rep","CF class","Post: 3 DU max sets — aim for 20+ consecutive"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 20 min WITH VEST — this will feel hard. Correct.","Zone 2 pace — do NOT race it. HR will be ~10 bpm higher.","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Easy walk 20 min — extra hip flexor work after first vest run","Mobility 20 min","10 min DU drills"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Strict ring pull-up false grip: 3x3","AM: Low ring MU: 3x5 with feet assist","CF class","Post: 800mx3 WITH VEST — controlled pace"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: 10x5 pull-ups WITH VEST — first vest pull-up volume","Post: DU max set — log PR"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class","Wear vest if comfortable — note how it changes shoulder fatigue"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Check: any joint pain (not soreness) from vest runs? Flag it."]}
+ ]},
+ {n:6,ph:2,lb:"Integration",fo:"Vest partition practice + DU streaks 30+",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — video every attempt, 5 sets","CF class","Post: DU 3 max sets — aim for 30+ consecutive"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 25 min WITH VEST — Zone 2, controlled","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Easy walk or bike 25 min","Mobility 20 min","DU drills 10 min"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring MU — first unassisted attempts if ready","AM: False grip hang: 3x30 sec","CF class","Post: 10x10 pull-ups WITH VEST — Murph partition practice"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: 10x20 push-ups WITH VEST","Post: DU consecutive sets — push streak length"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class","After: 15x20 air squats WITH VEST — squat endurance"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Foam roll thoroughly — vest weeks accumulate fatigue"]}
+ ]},
+ {n:7,ph:2,lb:"Integration",fo:"1-mile vest time trial + ring MU singles",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — chain 2 reps if singles are consistent","CF class","Post: DU max set — push for 40+"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM: 1-MILE WITH VEST TIME TRIAL — log the time","This sets your opener target for race day","CF class — moderate effort after time trial"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Easy walk only — post time trial recovery","Mobility 20 min","No DU today"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring MU singles WITH VEST or banded","CF class","Post: 800mx3 WITH VEST moderate pace"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: 50 pull-ups + 100 push-ups + 150 squats WITH VEST split as needed","Post: DU max set"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class — easy effort","Good sleep tonight — Full Murph sim next Saturday"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Good sleep — Full Murph WITH VEST next Saturday"]}
+ ]},
+ {n:8,ph:2,lb:"Integration",fo:"FULL MURPH WITH VEST — simulation",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — easy 3x3 attempts only (Murph Saturday)","CF class — moderate effort","Post: 2 DU max sets only"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM run: 20 min easy WITH VEST","CF class — moderate intensity"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Walk 20 min only","Mobility 20 min","No DU — rest up for Saturday"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["Light ring skill 15 min","CF class — moderate effort","Easy run 10 min WITH VEST"]},
+  {nm:"Fri",tp:"Rest",tc:"#444",ts:["FULL REST — tomorrow is Full Murph WITH VEST","Hydrate all day","Eat well — extra carbs today"]},
+  {nm:"Sat",tp:"MURPH TEST",tc:"#c9a84c",mu:true,ts:["FULL MURPH WITH 20 LB VEST","1 mile, 100 pull-ups, 200 push-ups, 300 squats, 1 mile","Partition: 20 rounds of 5/10/15 (Cindy format)","Mile opener: 10:00-10:30 WITH VEST — controlled, not a sprint","LOG: total time + how each segment felt"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest — you need it","Light walk only","Note recovery quality 1-10"]}
+ ]},
+ {n:9,ph:3,lb:"Peak",fo:"Race pace + chaining BMU and RMU reps",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — chain 3 reps goal, full rest between","CF class","Post: DU max set — aim for 50 unbroken"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM: 1 mile WITH VEST at exact goal opener: 10:00-10:30/mi","This will feel too easy. That is correct. Lock in the feeling.","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Walk 25 min","Mobility 20 min","10 min DU drills"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring MU — singles then attempt doubles","CF class","Post: 800m WITH VEST at race pace"]},
+  {nm:"Fri",tp:"CF+Skill",tc:"#4a8fe8",ts:["CF class","Post: Run 800m, 10x10 pull-ups, run 800m — all WITH VEST","Post: DU max set"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class","If hero WOD programmed — treat as Murph prep, go for it"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Evaluate: what is your biggest limiter heading into the final 3 weeks?"]}
+ ]},
+ {n:10,ph:3,lb:"Peak",fo:"Taper begins — sharpen, do not grind",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — 3 quality sets only","CF class","Post: 2 DU max sets"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM: 20 min easy WITH VEST — stay fresh","CF class"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Walk 20 min","Mobility 20 min","No DU — rest"]},
+  {nm:"Thu",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: Ring skill 15 min quality only","CF class","Post: 10 min easy jog WITH VEST"]},
+  {nm:"Fri",tp:"CF",tc:"#e8470a",ts:["CF class — reduce intensity if fatigued","Light DU practice only"]},
+  {nm:"Sat",tp:"CF",tc:"#e8470a",ts:["CF class — volume is 30% less this week","Trust the taper — the rest is making you faster"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest","Body is supercompensating — trust it"]}
+ ]},
+ {n:11,ph:3,lb:"Peak",fo:"FINAL DRESS REHEARSAL WITH VEST",days:[
+  {nm:"Mon",tp:"CF+Skill",tc:"#4a8fe8",ts:["AM: BMU — 3 confidence sets only","CF class","Post: DU — maintain sharpness"]},
+  {nm:"Tue",tp:"Run+CF",tc:"#4caf7d",ts:["AM: 20 min easy WITH VEST","CF class — moderate"]},
+  {nm:"Wed",tp:"Recovery",tc:"#555",ts:["Walk only","Mobility 20 min"]},
+  {nm:"Thu",tp:"CF",tc:"#e8470a",ts:["CF class — light effort","10 min shakeout WITH VEST"]},
+  {nm:"Fri",tp:"Rest",tc:"#444",ts:["Full rest","Eat well, hydrate","Tomorrow is your dress rehearsal — visualize it"]},
+  {nm:"Sat",tp:"MURPH TEST",tc:"#c9a84c",mu:true,ts:["FULL MURPH WITH VEST — GO FOR YOUR GOAL TIME","Target: sub-60 min","Mile 1: 10:00-10:30 WITH VEST — hold back, stay disciplined","20 rounds of 5/10/15 — consistent steady pace","LOG: total time and how each segment felt"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Full rest — recover well","2 weeks to race day — almost there"]}
+ ]},
+ {n:12,ph:3,lb:"Peak",fo:"RACE WEEK — taper, rest, execute",days:[
+  {nm:"Mon",tp:"Run",tc:"#4caf7d",ts:["20 min easy shakeout WITH VEST — stay loose","No hard efforts this week at all"]},
+  {nm:"Tue",tp:"CF",tc:"#e8470a",ts:["CF class — light, feel good","Nothing heroic this week"]},
+  {nm:"Wed",tp:"Rest",tc:"#444",ts:["Full rest or easy 15 min walk","Visualize race: mile pace, partition, breathing"]},
+  {nm:"Thu",tp:"CF",tc:"#e8470a",ts:["Light CF class or 20 min movement","5x10 kipping pull-ups — stay sharp","10 min DU — feel the rope, don't push"]},
+  {nm:"Fri",tp:"Rest",tc:"#444",ts:["FULL REST — most important rest day","Extra carbs today — eat well","Hydrate all day","Lay out gear: vest, shoes, watch","Sleep 8-9 hours tonight"]},
+  {nm:"Sat",tp:"MURPH RACE",tc:"#e84a4a",mu:true,ts:["MURPH RACE DAY — 20 LB VEST","Warm up: 10 min easy jog","Mile 1: 10:00-10:30 WITH VEST — controlled, NOT a sprint","20 rounds: 5 pull-ups, 10 push-ups, 15 air squats","Keep moving — brief pauses beat full stops","Mile 2: give everything you have left","GOAL: SUB-60 MINUTES"]},
+  {nm:"Sun",tp:"Rest",tc:"#444",ts:["Rest and celebrate — you earned it","Reflect: what went well, what to build on next"]}
+ ]}
+];
+
+const METS=[
+ {id:"weight",lb:"Body Weight",un:"lbs",ic:"⚖️",tgt:220,st:230,low:true},
+ {id:"du",lb:"Best Unbroken DUs",un:"reps",ic:"🪢",tgt:50,st:0},
+ {id:"bmu",lb:"Bar MU (unbroken)",un:"reps",ic:"🏋️",tgt:3,st:0},
+ {id:"rmu",lb:"Ring MU",un:"reps",ic:"💪",tgt:3,st:0},
+ {id:"mile",lb:"Mile Run (with vest wk5+)",un:"mm:ss",ic:"🏃",tgt:630,st:780,low:true,
+  fmt:v=>{if(!v||isNaN(v))return"—";const s=parseInt(v);return Math.floor(s/60)+":"+(s%60<10?"0":"")+s%60},
+  parse:v=>{if(!v)return"";const tr=v.trim();if(tr.includes(":")){const[m,s]=tr.split(":");return String(parseInt(m||0)*60+parseInt(s||0))}return tr}
+ },
+ {id:"energy",lb:"Energy Level",un:"/10",ic:"⚡",tgt:8,st:5}
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let S={cw:1,logs:{},metrics:{},msgs:[]};
+let lCtx={w:1,d:0};
+
+function save(){
+ document.getElementById("saving-ind").classList.add("show");
+ try{localStorage.setItem("murph_v3",JSON.stringify(S));}catch(e){}
+ setTimeout(()=>document.getElementById("saving-ind").classList.remove("show"),700);
+}
+function load(){
+ try{const r=localStorage.getItem("murph_v3");if(r)S=JSON.parse(r);}catch(e){}
+}
+
+function lk(w,d){return"w"+w+"d"+d;}
+function gl(w,d){return S.logs[lk(w,d)]||{done:[],note:""};}
+function dayOk(w,d){const l=gl(w,d);const t=W[w-1].days[d].ts;return l.done.length===t.length&&l.done.every(Boolean);}
+function wProg(w){const d=W[w-1].days;let c=0;d.forEach((_,i)=>{if(dayOk(w,i))c++;});return Math.round(c/d.length*100);}
+
+// ── ROUTING ───────────────────────────────────────────────────────────────────
+function go(s){
+ document.querySelectorAll(".screen").forEach(el=>el.classList.remove("active"));
+ document.querySelectorAll(".nav-btn").forEach(el=>el.classList.remove("active"));
+ document.getElementById("s-"+s).classList.add("active");
+ const nb=document.getElementById("nb-"+s);
+ if(nb)nb.classList.add("active");
+ if(s==="home")rHome();
+ if(s==="week")rWeek();
+ if(s==="progress")rProg();
+ if(s==="coach")rCoach();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────────────────
+function rHome(){
+ const wk=W[S.cw-1];
+ document.getElementById("h-wn").textContent=S.cw;
+ document.getElementById("h-focus").textContent=wk.fo.replace(/[^\x00-\x7F]/g,"").trim();
+
+ // phase bar
+ const pb=document.getElementById("pbar");pb.innerHTML="";
+ const pc=["#4caf7d","#4a8fe8","#e8470a"];
+ for(let i=1;i<=12;i++){
+  if(i===5||i===9){const d=document.createElement("div");d.className="pdot";pb.appendChild(d);}
+  const s=document.createElement("div");s.className="pseg";
+  s.style.background=i<=S.cw?pc[W[i-1].ph-1]:"#2a2a2a";
+  pb.appendChild(s);
+ }
+
+ const list=document.getElementById("wk-list");list.innerHTML="";
+ W.forEach(w=>{
+  const p=wProg(w.n);
+  const cur=w.n===S.cw;
+  const done=p===100;
+  const hasMu=w.days.some(d=>d.mu);
+  const div=document.createElement("div");
+  div.className="wk-item"+(cur?" cur":"")+(done?" wkdone":"");
+  div.innerHTML=`<div class="wk-num">${w.n}</div>
+   <div class="wk-info">
+    <div class="wk-name">${w.lb} &middot; ${w.fo.replace(/[^\x00-\x7F]/g,"").trim().substring(0,38)}</div>
+    <div class="wk-pb"><div class="wk-pf" style="width:${p}%;background:${done?"#4caf7d":"#e8470a"}"></div></div>
+   </div>
+   <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+    ${hasMu?"<span>🎖️</span>":""}${done?"<span>✅</span>":""}
+   </div>`;
+  div.onclick=()=>{S.cw=w.n;save();go("week");};
+  list.appendChild(div);
+ });
+}
+
+// ── WEEK VIEW ─────────────────────────────────────────────────────────────────
+function rWeek(){
+ const wk=W[S.cw-1];
+ document.getElementById("wv-title").textContent="WEEK "+S.cw+" — "+wk.lb.toUpperCase();
+ document.getElementById("wv-sub").textContent=wk.fo.replace(/[^\x00-\x7F]/g,"").trim();
+ document.getElementById("wv-pct").textContent=wProg(S.cw)+"%";
+
+ const list=document.getElementById("day-list");list.innerHTML="";
+ wk.days.forEach((day,di)=>{
+  const lg=gl(S.cw,di);
+  const done=dayOk(S.cw,di);
+  const isMu=day.mu;
+  const card=document.createElement("div");
+  card.className="day-card"+(done?" day-done":"")+(isMu&&!done?" day-murph":"");
+
+  const logBtn=done
+   ?`<span style="color:#4caf7d;font-size:20px;margin-left:auto">✓</span>`
+   :`<button class="log-btn" style="background:${isMu?"#c9a84c":"#e8470a"};color:#0e0e0e" onclick="openLog(${S.cw},${di})">${isMu?"LOG RESULT":"LOG"}</button>`;
+
+  card.innerHTML=`<div class="day-head">
+   <div class="day-name-lbl" style="color:${done?"#4caf7d":isMu?"#c9a84c":"#ede9e0"}">${day.nm}</div>
+   <span class="type-tag" style="color:${day.tc};background:${day.tc}1a">${day.tp}</span>
+   ${logBtn}
+  </div>
+  <div class="day-tasks" id="dt-${di}"></div>
+  ${lg.note?`<div class="day-note-display">📝 ${lg.note}</div>`:""}`;
+  list.appendChild(card);
+
+  const tc=card.querySelector("#dt-"+di);
+  day.ts.forEach((t,ti)=>{
+   const chk=lg.done[ti]||false;
+   const row=document.createElement("div");
+   row.className="task-row"+(chk?" ticked":"");
+   row.innerHTML=`<div class="cb${chk?" chk":""}">${chk?"✓":""}</div><div class="task-txt">${t}</div>`;
+   row.onclick=()=>togTask(S.cw,di,ti,row);
+   tc.appendChild(row);
+  });
+ });
+
+ // nav
+ const nav=document.createElement("div");nav.className="week-nav";
+ if(S.cw>1)nav.innerHTML+=`<button class="wn-btn" onclick="S.cw--;save();rWeek()">&#8592; Week ${S.cw-1}</button>`;
+ if(S.cw<12)nav.innerHTML+=`<button class="wn-btn" onclick="S.cw++;save();rWeek()">Week ${S.cw+1} &#8594;</button>`;
+ list.appendChild(nav);
+}
+
+function togTask(w,d,ti,row){
+ const k=lk(w,d);
+ if(!S.logs[k])S.logs[k]={done:[],note:""};
+ const lg=S.logs[k];
+ const tlen=W[w-1].days[d].ts.length;
+ while(lg.done.length<tlen)lg.done.push(false);
+ lg.done[ti]=!lg.done[ti];
+ save();
+ const cb=row.querySelector(".cb");
+ if(lg.done[ti]){cb.classList.add("chk");cb.textContent="✓";row.classList.add("ticked");}
+ else{cb.classList.remove("chk");cb.textContent="";row.classList.remove("ticked");}
+ document.getElementById("wv-pct").textContent=wProg(S.cw)+"%";
+}
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+function openLog(w,d){
+ lCtx={w,d};
+ const day=W[w-1].days[d];
+ document.getElementById("log-title").textContent="LOG — "+day.nm+" · WK"+w;
+ document.getElementById("log-sub").textContent=day.tp;
+ document.getElementById("log-back-btn").onclick=()=>go("week");
+ document.getElementById("log-note").value=gl(w,d).note||"";
+
+ const hint=document.getElementById("murph-hint");
+ if(day.mu){
+  hint.style.display="block";
+  hint.textContent=day.tp==="MURPH RACE"
+   ?"💡 Log your final time and how each segment felt. This is what 12 weeks have been building toward."
+   :"💡 Log your time in Session Notes (e.g. 'Half Murph: 28:45'). Note which movement slowed you most.";
+ }else{hint.style.display="none";}
+
+ const mi=document.getElementById("metric-inputs");mi.innerHTML="";
+ METS.forEach(m=>{
+  const ex=S.metrics["w"+w]?.[m.id]||"";
+  const disp=m.fmt?m.fmt(ex):ex;
+  const row=document.createElement("div");row.className="metric-row";
+  row.innerHTML=`<div class="m-icon">${m.ic}</div>
+   <div class="m-label">
+    <div class="m-name">${m.lb}</div>
+    <div class="m-target">Target: ${m.id==="mile"?"10:00/mi w/vest":m.tgt+" "+m.un}</div>
+   </div>
+   <input type="${m.id==="mile"?"text":"number"}" class="m-input" id="mi-${m.id}" value="${disp!=="—"?disp:""}" placeholder="—">
+   <div class="m-unit">${m.un}</div>`;
+  mi.appendChild(row);
+ });
+
+ document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById("s-log").classList.add("active");
+}
+
+function saveDay(){
+ const {w,d}=lCtx;
+ const k=lk(w,d);
+ S.logs[k]={done:W[w-1].days[d].ts.map(()=>true),note:document.getElementById("log-note").value.trim()};
+ const wk="w"+w;
+ if(!S.metrics[wk])S.metrics[wk]={};
+ METS.forEach(m=>{
+  const el=document.getElementById("mi-"+m.id);
+  if(el&&el.value.trim()){
+   const v=m.parse?m.parse(el.value):el.value;
+   if(v)S.metrics[wk][m.id]=v;
+  }
+ });
+ save();go("week");
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function rProg(){
+ const body=document.getElementById("prog-body");
+ body.innerHTML=`<div class="section-label">Goal Tracking</div>`;
+
+ METS.forEach(m=>{
+  const pts=[];
+  for(let w=1;w<=12;w++){
+   const v=S.metrics["w"+w]?.[m.id];
+   if(v!==undefined&&v!==""&&!isNaN(parseFloat(v)))pts.push({w,v:parseFloat(v)});
+  }
+  const latest=pts[pts.length-1];
+  const lv=latest?.v;
+  let pct=0;
+  if(lv!==undefined){
+   pct=m.low?Math.round((m.st-lv)/(m.st-m.tgt)*100):Math.round((lv-m.st)/(m.tgt-m.st)*100);
+  }
+  pct=Math.max(0,Math.min(100,pct));
+  const fv=m.fmt?m.fmt(lv):(lv!==undefined?lv+" "+m.un:"—");
+  const card=document.createElement("div");card.className="prog-card";
+  card.innerHTML=`<div class="prog-top">
+   <div class="prog-icon">${m.ic}</div>
+   <div style="flex:1">
+    <div style="font-size:13px;color:#ede9e0;font-weight:500">${m.lb}</div>
+    <div style="font-size:11px;color:#555;margin-top:1px">Latest: <span style="color:#c9a84c">${fv}</span> &middot; Target: ${m.id==="mile"?"10:00/mi":m.tgt+" "+m.un}</div>
+   </div>
+  </div>
+  <div class="prog-bar-wrap"><div class="prog-bar-fill${pct>=100?" g":""}" style="width:${pct}%"></div></div>
+  <div style="font-family:monospace;font-size:10px;color:#555;margin-top:4px">${pct}% to goal</div>
+  ${pts.length>1?`<div class="hist-row">${pts.map(p=>`<div class="hist-pt"><div class="hist-v">${m.fmt?m.fmt(p.v):p.v}</div><div class="hist-w">W${p.w}</div></div>`).join("")}</div>`:""}`;
+  body.appendChild(card);
+ });
+
+ const sh=document.createElement("div");
+ sh.innerHTML=`<div class="section-label" style="margin-top:16px">Murph Simulations</div>`;
+ body.appendChild(sh);
+
+ [[4,"Half Murph (No Vest)"],[8,"Full Murph + Vest"],[11,"Dress Rehearsal + Vest"],[12,"Race Day"]].forEach(([wn,lb])=>{
+  const di=W[wn-1].days.findIndex(d=>d.mu);
+  const lg=gl(wn,di);
+  const has=lg.note&&lg.note.trim();
+  const row=document.createElement("div");
+  row.className="sim-row"+(has?" sim-logged":"");
+  row.innerHTML=`<div style="font-size:18px">🎖️</div>
+   <div>
+    <div style="font-size:13px;color:#ede9e0">Week ${wn} — ${lb}</div>
+    ${has?`<div style="font-size:12px;color:#c9a84c;margin-top:2px">${lg.note}</div>`:`<div style="font-size:11px;color:#444">Not yet logged</div>`}
+   </div>`;
+  body.appendChild(row);
+ });
+}
+
+// ── COACH ─────────────────────────────────────────────────────────────────────
+function rCoach(){
+ const area=document.getElementById("chat-area");area.innerHTML="";
+ if(!S.msgs.length){
+  area.innerHTML=`<div style="background:#181818;border:1px solid #2a2a2a;border-radius:5px;padding:14px;margin-bottom:14px">
+   <div style="font-size:13px;color:#b8b4ac;line-height:1.8">
+    Hey — I know your full 12-week plan, your stats, and your Murph goal (sub-60 with vest). Tell me how training is going and I'll give you specific feedback and adjustments.<br><br>
+    <span style="color:#555">Try: "Logged Half Murph in 31 min" &middot; "DUs keep tripping at 20" &middot; "First vest run was brutal" &middot; "Knee feels off"</span>
+   </div>
+  </div>
+  <div class="suggestions">
+   ${["How am I tracking for sub-60?","DUs keep breaking at 20 reps","First vest run was brutal — normal?","Can I still do Murph without a BMU?","Should I add more running?"].map(s=>`<button class="sug" onclick="sendMsg('${s}')">${s}</button>`).join("")}
+  </div>`;
+ } else {
+  S.msgs.forEach(m=>addBubble(m.r,m.c,false));
+  setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+ }
+ document.getElementById("chat-inp").onkeydown=e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMsg();}
+ };
+}
+
+function addBubble(role,content,scroll){
+ const area=document.getElementById("chat-area");
+ const d=document.createElement("div");d.className="msg "+(role==="user"?"user":"");
+ d.innerHTML=`<div class="bubble">${content}</div>`;
+ area.appendChild(d);
+ if(scroll!==false)area.scrollTop=area.scrollHeight;
+}
+
+async function sendMsg(pre){
+ const inp=document.getElementById("chat-inp");
+ const txt=pre||inp.value.trim();
+ if(!txt)return;
+ inp.value="";
+ document.getElementById("send-btn").disabled=true;
+ if(!S.msgs.length)document.getElementById("chat-area").innerHTML="";
+ addBubble("user",txt);
+ S.msgs.push({r:"user",c:txt});
+
+ const area=document.getElementById("chat-area");
+ const typ=document.createElement("div");typ.className="typing-ind";typ.textContent="Thinking...";
+ area.appendChild(typ);area.scrollTop=area.scrollHeight;
+
+ const ms=Object.entries(S.metrics).sort(([a],[b])=>+a.slice(1)-+b.slice(1))
+  .map(([k,v])=>"Wk"+k.slice(1)+": "+Object.entries(v).filter(([,x])=>x!=="").map(([a,b])=>a+"="+b).join(",")).join(" | ")||"None yet";
+
+ const mls=[[4,"Half Murph"],[8,"Full Vest Murph"],[11,"Dress Rehearsal"],[12,"Race Day"]].map(([wn,lb])=>{
+  const di=W[wn-1].days.findIndex(d=>d.mu);const lg=gl(wn,di);return lg.note?lb+" (Wk"+wn+"): "+lg.note:null;
+ }).filter(Boolean).join(" | ")||"None yet";
+
+ const sys=`You are a direct, experienced CrossFit coach. You know this athlete completely.
+
+PROFILE: 46yr male, 230 lbs ~25% BF. Lifts: 350 bench / 375 squat / 405 deadlift. CrossFit 5-6x/wk.
+GOALS: Lose 10 lbs, bar muscle-up, ring muscle-up, 50+ unbroken double-unders, Murph WITH 20 LB VEST Memorial Day sub-60 min.
+STATUS: Week ${S.cw}/12. Metrics: ${ms}. Murph logs: ${mls}.
+PLAN: Wks 1-4 Foundation (no vest, skill mechanics, Half Murph test Wk4). Wks 5-8 Integration (vest on Wk5, Full Murph sim Wk8). Wks 9-12 Peak (race pace, taper, race day Wk12).
+MURPH STRATEGY: 20 rounds of 5/10/15. Vest opener mile: 10:00-10:30/mi.
+
+Be direct and specific. Use the athlete's actual numbers. Under 180 words. If they report a result, analyze it vs expected and give exact next steps. If something needs changing in the plan, say precisely what.`;
+
+ try{
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+   method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,
+    messages:S.msgs.map(m=>({role:m.r,content:m.c}))})
+  });
+  const data=await res.json();
+  const reply=data.content?.[0]?.text||"Sorry — couldn't connect. Check your internet and try again.";
+  typ.remove();addBubble("assistant",reply);S.msgs.push({r:"assistant",c:reply});
+ }catch(e){
+  typ.remove();
+  const err="Connection error — make sure you're online and try again.";
+  addBubble("assistant",err);S.msgs.push({r:"assistant",c:err});
+ }
+ save();document.getElementById("send-btn").disabled=false;
+ area.scrollTop=area.scrollHeight;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+load();rHome();
+
+// Android keyboard handling — shrink coach when keyboard opens
+if(window.visualViewport){
+ window.visualViewport.addEventListener('resize',()=>{
+  const coach=document.getElementById('s-coach');
+  if(coach.classList.contains('active')){
+   const kbHeight=window.innerHeight-window.visualViewport.height;
+   coach.style.bottom=(60+kbHeight)+'px';
+   const area=document.getElementById('chat-area');
+   setTimeout(()=>{area.scrollTop=area.scrollHeight;},100);
+  }
+ });
+}
+
+// When input is focused on Android, scroll chat up
+document.getElementById('chat-inp').addEventListener('focus',()=>{
+ setTimeout(()=>{
+  const area=document.getElementById('chat-area');
+  area.scrollTop=area.scrollHeight;
+ },400);
+});
+</script>
+</body>
+</html>
